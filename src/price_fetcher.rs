@@ -83,6 +83,7 @@ impl PriceFetchService {
     }
 
     pub async fn average(&self, pool_pubkey: &Pubkey) -> PriceFetchResponse {
+        // TODO: Provide configurable `for_interval` variable
         let (pool_pubkey_as_string, for_interval) = (pool_pubkey.to_string(), Duration::from_minutes(5));
 
         match self.storage.average(pool_pubkey, for_interval).await {
@@ -136,6 +137,8 @@ impl PriceFetchService {
     }
 }
 
+
+// TODO: Add more convenient response structs
 #[derive(Deserialize, Debug, Clone)]
 pub enum PriceFetchResponseType {
     CurrentPrice(f64),

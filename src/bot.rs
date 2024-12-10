@@ -21,6 +21,8 @@ pub async fn setup_bot(price_fetch_service: Arc<PriceFetchService>) -> anyhow::R
     let bot = Bot::from_env();
 
     bot.set_my_commands(Command::bot_commands()).await.expect("Failed to set commands.");
+
+    // TODO: Provide multiple pools support
     let pool_address = Pubkey::from_str("EP2ib6dYdEeqD8MfE2ezHCxX3kP3K2eLKkirfPm5eyMx").unwrap();
 
     Command::repl(bot, move |bot: Bot, msg: Message, cmd: Command| {
