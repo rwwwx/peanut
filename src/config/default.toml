@@ -1,0 +1,13 @@
+[database]
+connection_url = "postgres://admin:admin@localhost:5432/peanut"
+min_connections = 1
+max_connections = 20
+log_level = "OFF"
+clear_old_records = true
+
+[liquidity_pool]
+account_addresses_base54 = ["EP2ib6dYdEeqD8MfE2ezHCxX3kP3K2eLKkirfPm5eyMx"]
+
+[rpc]
+yellowstone_grpc_endpoint = "https://solana-yellowstone-grpc.publicnode.com:443"
+json_rpc_endpoint = "https://solana-rpc.publicnode.com"

@@ -2,24 +2,10 @@ use futures::{SinkExt, StreamExt};
 use solana_sdk::pubkey::Pubkey;
 use std::collections::HashMap;
 use tokio::sync::mpsc::Sender;
-use tracing::info;
+use tracing::{debug, info};
 use yellowstone_grpc_client::GeyserGrpcClient;
 use yellowstone_grpc_proto::geyser::{SubscribeRequest, SubscribeRequestFilterAccounts};
 use yellowstone_grpc_proto::prelude::subscribe_update::UpdateOneof;
-
-// pub fn calc_coin_in_pc(pool_data: &CalculateResult) -> anyhow::Result<f64> {
-//     pc_amount * pc_price = coin_amount * coin_price
-//     coin_price = pc_price * (pc_amount / coin_amount)
-//     Ok((pool_data.pool_pc_vault_amount as f64)
-//         / 10_f64.powf(pool_data.pool_pc_decimals as f64)
-//         / (pool_data.pool_coin_vault_amount as f64)
-//         * 10_f64.powf(pool_data.pool_coin_decimals as f64))
-// }
-
-// pool_pc_vault_amount
-// pool_pc_decimals
-// pool_coin_vault_amount
-// pool_coin_decimals
 
 type AccountAddressAndData = (Pubkey, Vec<u8>);
 
@@ -49,13 +35,15 @@ pub async fn get_account_data(conf: AccountDataReceiverConf) -> anyhow::Result<(
         ping: None,
     };
 
-    let mut client =
-        GeyserGrpcClient::connect::<_, String>(conf.yellowstone_grpc_endpoint, None, None)?;
+    let mut client = GeyserGrpcClient::connect::<_, String>(conf.yellowstone_grpc_endpoint, None, None)?;
     let (mut sink, mut stream) = client.subscribe().await?;
 
     let account_address = conf.account_address.clone().to_string();
     let send = async move {
-        sink.send(subscribe_req).await.inspect(|_| info!("Subscribed to account: {}", account_address))?;
+        sink.send(subscribe_req.clone())
+            .await
+            .inspect(|_| info!("Subscribed to pool: {}", account_address))?;
+
         Ok::<(), anyhow::Error>(())
     };
 
@@ -63,20 +51,22 @@ pub async fn get_account_data(conf: AccountDataReceiverConf) -> anyhow::Result<(
     let receive = async move {
         while let Some(msg) = stream.next().await.transpose().ok().flatten() {
             if let Some(UpdateOneof::Account(subscribe_update)) = msg.update_oneof {
-                println!("Received update: {:#?}", &subscribe_update);
+                debug!("Received update {account_address}", account_address = account_address.to_string());
 
-                let account_data = match subscribe_update.account {
-                    None => continue,
-                    Some(account_info) => {
-                        conf.sender.send((account_address.clone(), account_info.data)).await.ok()
-                    }
+                let Some(account_info) = subscribe_update.account else {
+                    continue;
                 };
+
+                conf.sender
+                    .send((account_address.clone(), account_info.data))
+                    .await
+                    .ok();
             }
         }
 
         Ok::<(), anyhow::Error>(())
     };
 
-    futures::try_join!(send, receive);
+    futures::try_join!(send, receive).ok();
     Ok(())
 }

@@ -1,22 +1,23 @@
-use crate::account_data_receiver::AccountDataReceiverMock;
-use crate::arced::Arced;
 use crate::config::Settings;
 use crate::price_fetcher::PriceFetchService;
 use crate::storage::PostgresStorage;
+use solana_client::nonblocking::rpc_client::RpcClient;
 use std::io;
 use std::sync::Arc;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::EnvFilter;
+use trait_ext::arced_ext::Arced;
+use crate::bot::setup_bot;
 
-mod account_data_receiver;
+mod amm_math;
+mod bot;
 mod config;
-mod duration_ext;
 mod models;
 mod price_fetcher;
+mod rpc;
 mod storage;
-mod supervisor;
-mod arced;
+mod trait_ext;
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
@@ -24,19 +25,23 @@ async fn main() -> io::Result<()> {
         Settings::load(None, Some("peanut/src/config")).unwrap_or_else(|e| panic!("Configuration failed: '{e}'!"));
     set_up_logging("info");
 
-    let (storage, account_data) = (
-        PostgresStorage::from_settings(&settings)
-            .await
-            .expect("Can't create storage")
-            .arced(),
-        AccountDataReceiverMock.arced(),
-    );
-
-    let fetcher = PriceFetchService::from_settings(&settings, storage.clone(), storage, account_data)
+    let storage = PostgresStorage::from_settings(&settings)
         .await
-        .expect("Can't create price fetch service");
-    fetcher.start_price_fetching().expect("Can't start price fetch");
-    loop {}
+        .expect("Can't create storage")
+        .arced();
+    let json_rpc = RpcClient::new(settings.rpc.json_rpc_endpoint.clone()).arced();
+
+    let price_fetcher = PriceFetchService::from_settings(&settings, storage.clone(), storage, json_rpc)
+        .await
+        .expect("Can't create price fetch service")
+        .arced();
+    price_fetcher
+        .start_price_fetching_in_background()
+        .expect("Can't start price fetch");
+
+    setup_bot(price_fetcher).await.ok();
+
+
     Ok(())
 }
 
