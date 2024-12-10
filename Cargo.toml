@@ -46,6 +46,7 @@ async-trait = "0.1.66"
 config = "0.14"
 
 # Tools
+dotenv = "*"
 anyhow = "1"
 futures = "*"
 chrono = { version = "0.4", features = ["serde"] }

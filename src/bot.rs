@@ -27,7 +27,7 @@ enum Command {
 pub async fn setup_bot(price_fetch_service: Arc<PriceFetchService>) -> anyhow::Result<()> {
     const ERR_MSG: &str = "Incorrect input, please specify pool address after command";
 
-    let bot = Bot::new("8129950231:AAFOB04snHB5J-5AIzMH8RUB1qtIH0Is_zY");
+    let bot = Bot::from_env();
 
     bot.set_my_commands(Command::bot_commands()).await.expect("Failed to set commands.");
 
