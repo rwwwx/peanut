@@ -162,8 +162,8 @@ impl Display for PriceFetchResponseType {
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct PriceFetchResponse {
-    pool_address: String,
-    response_type: PriceFetchResponseType,
+    pub pool_address: String,
+    pub response_type: PriceFetchResponseType,
 }
 
 impl PriceFetchResponse {
