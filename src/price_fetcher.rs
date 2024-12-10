@@ -67,6 +67,11 @@ impl PriceFetchService {
         }
     }
 
+    pub fn supported_pools(&self) -> Vec<String> {
+        self.liquidity_pools_account_addresses.iter().map(Pubkey::to_string).collect()
+    }
+
+
     pub async fn current(&self, pool_pubkey: &Pubkey) -> PriceFetchResponse {
         let pool_pubkey_as_string = pool_pubkey.to_string();
 

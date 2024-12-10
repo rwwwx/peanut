@@ -22,7 +22,7 @@ pub struct Database {
     pub connection_url: String,
     pub min_connections: u32,
     pub max_connections: u32,
-    pub _log_level: String,
+    pub log_level: String,
     pub clear_old_records: bool,
 }
 

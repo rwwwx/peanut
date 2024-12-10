@@ -19,6 +19,8 @@ enum Command {
         description = "Last actual price. Usage example: /current <pool address in base64 encoding>"
     )]
     Current(String),
+    #[command(description = "Show supported pools addresses")]
+    Supported,
 }
 
 
@@ -50,6 +52,10 @@ pub async fn setup_bot(price_fetch_service: Arc<PriceFetchService>) -> anyhow::R
 
                     let current_resp = price_fetch_service.current(&pool_address).await;
                     bot.send_message(msg.chat.id, format!("{current_resp}")).await?;
+                }
+                Command::Supported => {
+                    let supported_pools = price_fetch_service.supported_pools().join("\\n");
+                    bot.send_message(msg.chat.id, supported_pools).await?;
                 }
             }
 
