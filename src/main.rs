@@ -23,7 +23,7 @@ mod trait_ext;
 async fn main() -> io::Result<()> {
     dotenv::dotenv().expect("Failed to read '.env' file");
     let settings =
-        Settings::load(None, Some("peanut/src/config")).unwrap_or_else(|e| panic!("Configuration failed: '{e}'!"));
+        Settings::load(None, None).unwrap_or_else(|e| panic!("Configuration failed: '{e}'!"));
     set_up_logging("info");
 
     let storage = PostgresStorage::from_settings(&settings)
